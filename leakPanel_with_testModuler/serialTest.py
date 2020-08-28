@@ -16,17 +16,32 @@ while(True):
 
         print "RegStr : " + regV + " InitStr : " + initV + " MaxStr : " + maxV
         
-        intRegV =  regV[0:regV.find('.')]
-        intInitV =  initV[0:initV.find('.')]
-        intMaxV =  maxV[0:maxV.find('.')]
+        tempRegV =  regV[0:regV.find('.')]
+        tempInitV =  initV[0:initV.find('.')]
+        tempMaxV =  maxV[0:maxV.find('.')]
 
-        print "RegValue : " + intRegV + " InitValue : " + intInitV + " MaxValue : " + intMaxV
+#        print "RegValue : " + tempRegV + " InitValue : " + tempInitV + " MaxValue : " + tempMaxV
+
+        if(tempRegV == 'O'):
+            intRegV = 0
+        else:
+            intRegV = int(tempRegV)
+        
+
+        intInitV = int(tempInitV)
+        intMaxV = int(tempMaxV)
+        
+#        print intInitV
+#        print intMaxV
         
         #result = intRegV + intInitV + intMaxV
         #print result
         
-        kmote.write(intRegV)
-#        kmote.write(int(intInitV))
+#        arrayTest = [0,intInitV,intMaxV]
+
+        kmote.write(bytes(bytearray([intRegV])))
+        kmote.write(bytes(bytearray([intInitV])))
+        kmote.write(bytes(bytearray([intMaxV])))
         
 #        kmote.write(1 + intInitV + intMaxV)
 
