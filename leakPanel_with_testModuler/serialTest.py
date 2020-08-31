@@ -27,7 +27,6 @@ while(True):
         else:
             intRegV = int(tempRegV)
         
-
         intInitV = int(tempInitV)
         intMaxV = int(tempMaxV)
         
@@ -36,17 +35,48 @@ while(True):
         
         #result = intRegV + intInitV + intMaxV
         #print result
-        
-#        arrayTest = [0,intInitV,intMaxV]
+#       arrayTest = [0,intInitV,intMaxV]
 
-        kmote.write(bytes(bytearray([intRegV])))
-        kmote.write(bytes(bytearray([intInitV])))
-        kmote.write(bytes(bytearray([intMaxV])))
-        
+#        kmote.write(bytes(bytearray([intRegV])))
+        intRegV = 4000
+        strRegV = str(intRegV)
+        if(intRegV <= 255):
+            kmote.write(bytes(bytearray([intRegV])))
+            kmote.write(bytes(bytearray([intInitV])))
+            kmote.write(bytes(bytearray([intMaxV])))
+        else:
+            if(len(strRegV)==3):
+                stempRegV = str(intRegV)
+                leftRegV = int(stempRegV[0:2])
+                rightRegV = int(stempRegV[2:3])
+#                print leftRegV , rightRegV
+                kmote.write(bytes(bytearray([leftRegV])))
+                kmote.write(bytes(bytearray([rightRegV])))
+                kmote.write(bytes(bytearray([intInitV])))
+                kmote.write(bytes(bytearray([intMaxV])))
+            else:
+                if(strRegV[2]=='0'):
+                    stempRegV = str(intRegV)
+                    leftRegV = int(stempRegV[0:2])
+                    rightRegV = int(stempRegV[2:4])
+                    kmote.write(bytes(bytearray([leftRegV])))
+                    kmote.write(bytes(bytearray([00])))
+                    kmote.write(bytes(bytearray([rightRegV])))
+                    kmote.write(bytes(bytearray([intInitV])))
+                    kmote.write(bytes(bytearray([intMaxV])))
+                    
+                stempRegV = str(intRegV)
+                leftRegV = int(stempRegV[0:2])
+                rightRegV = int(stempRegV[2:4])
+#                print leftRegV , rightRegV
+                kmote.write(bytes(bytearray([leftRegV])))
+                kmote.write(bytes(bytearray([rightRegV])))
+                kmote.write(bytes(bytearray([intInitV])))
+                kmote.write(bytes(bytearray([intMaxV])))
+
 #        kmote.write(1 + intInitV + intMaxV)
 
 
-     
     except Exception as e:
         print("Exception read") + str(e)
     
