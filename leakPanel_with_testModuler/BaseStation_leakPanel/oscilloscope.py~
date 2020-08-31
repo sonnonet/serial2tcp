@@ -1,0 +1,144 @@
+#!/usr/bin/env python
+# write by sonnonet 1.2Ver
+# CO2 Rev 2.4
+# THL Rev 1.6 Extenstion
+# PH Rev 1.0 
+# Serial to Mysql 
+
+# Data Format
+# CO2  Data0
+# THL Temperature Data0, Humidity Data1, Illumination Data2, Battery Data3
+import time
+import sys
+import tos
+import datetime
+import threading
+import requests, json
+from influxdb import InfluxDBClient as influxdb
+import RPi.GPIO as G
+
+
+AM_OSCILLOSCOPE = 0x93
+
+G.setwarnings(False)
+G.setmode(G.BCM)
+G.setup(17,G.IN)
+G.setup(27,G.IN)
+
+class OscilloscopeMsg(tos.Packet):
+    def __init__(self, packet = None):
+        tos.Packet.__init__(self,
+                            [('srcID',  'int', 2),
+                             ('seqNo', 'int', 2),
+                             ('Data0', 'int', 1),
+                             ('Data1', 'int', 1),
+                             ('Data2', 'int', 1),
+                             ('Data3', 'int', 1),
+                             ('Data4', 'int', 1),
+                             ('Data5', 'int', 1),
+                             ],
+                            packet)
+if '-h' in sys.argv:
+    print "Usage:", sys.argv[0], "serial@/dev/ttyUSB0:57600"
+    sys.exit()
+
+am = tos.AM()
+
+def running():
+
+    while True:
+        p = am.read()
+        msg = OscilloscopeMsg(p.data)
+        print p
+    ####### ZLeak Sensor Logic ############
+        print "ID:",msg.srcID, "seqNo:",msg.seqNo,"Data0:",msg.Data0,"Data1:",msg.Data1," Data2:",msg.Data2, "Data3:",msg.Data3, "Data4:",msg.Data4, " Data5:",msg.Data5
+        if(msg.Data0 == msg.Data3):
+            if(msg.Data0 <=255):
+                reData = msg.Data0
+            print reData
+        else:
+            if(msg.Data0 == msg.Data5):
+                if(msg.Data0 == msg.Data1):
+                    reData = str(msg.Data0)+str(msg.Data1)
+                    print reData
+                else:
+                    reData = str(msg.Data0)+'0'+str(msg.Data2)
+                    print reData
+            else:
+                reData = str(msg.Data0)+str(msg.Data1)
+                print reData
+
+        if (int(reData) >= 4000):
+            if G.input(27) is 1:
+                print "running function 17 button state On"
+                G.setup(2,G.LOW)
+            
+            if G.input(17) is 1:
+                print "running function 27 button state On"
+                G.setup(3,G.LOW)
+            print "LEAK!!!"
+
+#        if (msg.ch2 > 4000):
+#            val2 = 0
+#        else:
+#            val2 = 1
+#            print "CH2 LEAK!!!"
+
+
+        data = [{
+            'measurement' : 'sensor',
+            'tags': {
+                'chId' : msg.srcID,
+            },
+            'fields': {
+                'seqNo' : msg.seqNo,
+                'Value' : reData,
+            }
+
+        }]
+
+#        print data
+
+        client = None
+        try:
+            client = influxdb('localhost', 8086, 'root', 'root', 'leak')
+        except Exception as e:
+            print "Exception " + str(e)
+
+        if client is not None:
+            try: 
+                client.write_points(data)
+            except Exception as e:
+                print "Exception write " + str(e)
+            finally:
+                client.close()
+
+def chkButton():
+
+    while True:
+        if G.input(17) is 0:
+        #    print "main 17 button state On"
+        #    G.setup(2,G.HIGH)
+            print "17 Pin is low" #stop
+            G.setup(2,G.HIGH)
+        #else:
+        #    print "17 Pin is low" #stop
+        #    G.setup(2,G.HIGH)
+
+        if G.input(27) is 0:
+        #    print "main 27 button state On"
+        #    G.setup(3,G.HIGH)
+            print "27 Pin is low"
+            G.setup(3,G.HIGH)
+        #else:
+        #    print "27 Pin is low"
+        #    G.setup(3,G.HIGH)
+        time.sleep(1)
+    GPIO.cleanup()
+
+if __name__ == '__main__':
+    thread_one = threading.Thread(target=running)
+    thread_two = threading.Thread(target=chkButton)
+    thread_one.start()
+    thread_two.start()
+
